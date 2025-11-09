@@ -3,9 +3,10 @@ import { DeleteIcon } from "./icons/Delete";
 import SaveIcon from "./icons/Save";
 import { useEffect, useRef, useState } from "react";
 import { useTranslator } from "../stores/translate";
+// Lista de historial de traducciones con soporte de edición inline y truncado con "Ver más"
 
 export const TranslateHistory = () => {
-  const { setTranslations, translations } = useTranslator();
+  const { setTranslations, translations } = useTranslator(); // Estado global de historial
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [expandedLeft, setExpandedLeft] = useState({});
@@ -14,11 +15,11 @@ export const TranslateHistory = () => {
   const [overflowRight, setOverflowRight] = useState({});
 
   // refs por fila para medir overflow real del texto truncado
-  const leftRefs = useRef({});
-  const rightRefs = useRef({});
+  const leftRefs = useRef({}); // refs para medir overflow de la columna izquierda
+  const rightRefs = useRef({}); // refs para medir overflow de la columna derecha
 
   const setLeftRef = (id) => (el) => {
-    if (el) leftRefs.current[id] = el;
+    if (el) leftRefs.current[id] = el; // guarda el nodo DOM por id
   };
   const setRightRef = (id) => (el) => {
     if (el) rightRefs.current[id] = el;
@@ -49,15 +50,16 @@ export const TranslateHistory = () => {
   };
 
   useEffect(() => {
-    getTranslationHistory();
+    getTranslationHistory(); // Carga inicial del historial desde el backend
   }, []);
 
   useEffect(() => {
-    // medir cuando cambia la data
+    // Mide de nuevo cuando cambia el historial para decidir "Ver más"
     measureOverflow();
   }, [translations]);
 
   useEffect(() => {
+    // Recalcular overflow al cambiar el tamaño de la ventana
     const onResize = () => measureOverflow();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -87,6 +89,7 @@ export const TranslateHistory = () => {
     setEditingId(null);
     setEditValue("");
 
+    // Persistir cambios: el backend recalcula la traducción
     const response = await fetch(`http://localhost:4000/translations/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -105,9 +108,9 @@ export const TranslateHistory = () => {
   };
 
   const toggleExpandLeft = (id) =>
-    setExpandedLeft((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedLeft((prev) => ({ ...prev, [id]: !prev[id] })); // Expande/colapsa izquierda
   const toggleExpandRight = (id) =>
-    setExpandedRight((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedRight((prev) => ({ ...prev, [id]: !prev[id] })); // Expande/colapsa derecha
 
   return (
     <ul className="flex w-full mt-6 flex-col">
@@ -118,7 +121,7 @@ export const TranslateHistory = () => {
           key={translation.id}
           className="border-t py-4 flex relative items-center justify-between border-gray-700/20 bg-zinc-50 w-full shadow-md"
         >
-          {/* Columna izquierda */}
+          {/* Columna izquierda: idioma fuente + texto original (editable) */}
           <div className="w-1/2 flex border-r-2 border-gray-800/60 px-8 h-full items-center gap-6">
             <span className="text-sm text-gray-900 px-2 py-1 bg-blue-200 border border-blue-300 rounded-sm">
               {translation.source_lang}
@@ -169,7 +172,7 @@ export const TranslateHistory = () => {
             )}
           </div>
 
-          {/* Columna derecha: ocupa el espacio restante, sin solapar iconos */}
+          {/* Columna derecha: texto traducido con truncado y "Ver más" */}
           <div className="flex-1 px-8 flex items-center gap-6 min-w-0">
             <span className="text-sm text-gray-900 px-2 py-1 bg-red-200 border border-red-300 rounded-sm">
               {translation.target_lang}
