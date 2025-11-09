@@ -1,3 +1,4 @@
+// Icono SVG para acción de intercambiar idiomas
 export const ShufleIcon = ({ className }) => {
   return (
     <svg
