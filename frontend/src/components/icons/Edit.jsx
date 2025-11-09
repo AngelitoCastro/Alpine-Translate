@@ -1,3 +1,4 @@
+// Icono SVG para activar modo edición
 export const EditIcon = ({ className }) => {
   return (
     <svg
