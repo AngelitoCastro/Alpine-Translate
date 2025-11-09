@@ -42,19 +42,17 @@ export const App = () => {
         }),
       });
 
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => ({}));
+        throw new Error(errorJson.message || "Error al traducir");
+      }
+
       const { data } = await response.json();
-      console.log(data);
-
-      setTranslate(data || "Sin resultado.");
-
-      const payload = {
-        source_text: finalPrompt,
-        source_lang: languageInput,
-        target_lang: languageOutput,
-        translated_text: data,
-      };
-
-      setTranslations([...translations, payload]);
+      // data ahora es el registro completo con id y translated_text
+      setTranslate(data?.translated_text || "Sin resultado.");
+      if (data) {
+        setTranslations([...translations, data]);
+      }
     } catch (error) {
       console.error(error);
       setTranslate("⚠️ No se pudo traducir, intenta otra vez.");
@@ -81,7 +79,7 @@ export const App = () => {
               className="flex-1 w-full resize-none bg-transparent text-lg outline-none placeholder-gray-400 min-h-[260px] leading-relaxed"
               placeholder="Escribe algo para traducir..."
               onInput={handleInput}
-               maxlength="500"
+              maxLength={500}
               value={prompt}
             />
             <div className="flex justify-end text-xs text-gray-400 mt-2">

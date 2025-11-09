@@ -1,12 +1,43 @@
 import { EditIcon } from "./icons/Edit";
 import { DeleteIcon } from "./icons/Delete";
-import { useEffect, useState } from "react";
+import SaveIcon from "./icons/Save";
+import { useEffect, useRef, useState } from "react";
 import { useTranslator } from "../stores/translate";
 
 export const TranslateHistory = () => {
   const { setTranslations, translations } = useTranslator();
   const [editingId, setEditingId] = useState(null);
   const [editValue, setEditValue] = useState("");
+  const [expandedLeft, setExpandedLeft] = useState({});
+  const [expandedRight, setExpandedRight] = useState({});
+  const [overflowLeft, setOverflowLeft] = useState({});
+  const [overflowRight, setOverflowRight] = useState({});
+
+  // refs por fila para medir overflow real del texto truncado
+  const leftRefs = useRef({});
+  const rightRefs = useRef({});
+
+  const setLeftRef = (id) => (el) => {
+    if (el) leftRefs.current[id] = el;
+  };
+  const setRightRef = (id) => (el) => {
+    if (el) rightRefs.current[id] = el;
+  };
+
+  const measureOverflow = () => {
+    const ol = {};
+    const or = {};
+    Object.keys(leftRefs.current).forEach((id) => {
+      const el = leftRefs.current[id];
+      if (el) ol[id] = el.scrollWidth > el.clientWidth;
+    });
+    Object.keys(rightRefs.current).forEach((id) => {
+      const el = rightRefs.current[id];
+      if (el) or[id] = el.scrollWidth > el.clientWidth;
+    });
+    setOverflowLeft(ol);
+    setOverflowRight(or);
+  };
 
   const getTranslationHistory = async () => {
     const response = await fetch("http://localhost:4000/translations", {
@@ -21,6 +52,17 @@ export const TranslateHistory = () => {
     getTranslationHistory();
   }, []);
 
+  useEffect(() => {
+    // medir cuando cambia la data
+    measureOverflow();
+  }, [translations]);
+
+  useEffect(() => {
+    const onResize = () => measureOverflow();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const handleEdit = (id) => {
     if (editingId === id) {
       handleSave(id);
@@ -31,6 +73,7 @@ export const TranslateHistory = () => {
     setEditingId(id);
     setEditValue(current.source_text);
   };
+
   const handleSave = async (id) => {
     const current = translations.find((t) => t.id === id);
     if (!current) return;
@@ -40,7 +83,6 @@ export const TranslateHistory = () => {
     const updatedTranslations = translations.map((t) =>
       t.id === id ? updatedItem : t
     );
-
     setTranslations(updatedTranslations);
     setEditingId(null);
     setEditValue("");
@@ -56,24 +98,16 @@ export const TranslateHistory = () => {
     });
     const { data } = await response.json();
 
-    const newTranslations = translations.map((translation) => {
-      if (translation.id === data.id) {
-        return data;
-      }
-      return translation;
-    });
-
+    const newTranslations = translations.map((translation) =>
+      translation.id === data.id ? data : translation
+    );
     setTranslations(newTranslations);
   };
 
-  const handleDelete = async (id) => {
-    const newTranslations = translations.filter((t) => t.id !== id);
-    setTranslations(newTranslations);
-    await fetch(`http://localhost:4000/translations/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    });
-  };
+  const toggleExpandLeft = (id) =>
+    setExpandedLeft((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleExpandRight = (id) =>
+    setExpandedRight((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <ul className="flex w-full mt-6 flex-col">
@@ -84,6 +118,7 @@ export const TranslateHistory = () => {
           key={translation.id}
           className="border-t py-4 flex relative items-center justify-between border-gray-700/20 bg-zinc-50 w-full shadow-md"
         >
+          {/* Columna izquierda */}
           <div className="w-1/2 flex border-r-2 border-gray-800/60 px-8 h-full items-center gap-6">
             <span className="text-sm text-gray-900 px-2 py-1 bg-blue-200 border border-blue-300 rounded-sm">
               {translation.source_lang}
@@ -97,26 +132,94 @@ export const TranslateHistory = () => {
                 onChange={(e) => setEditValue(e.target.value)}
               />
             ) : (
-              <h3
-                id={`currentTraduction-${translation.id}`}
-                className="text-lg truncate"
-              >
-                {translation.source_text}
-              </h3>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {expandedLeft[translation.id] ? (
+                  <>
+                    <p className="text-lg whitespace-pre-wrap flex-1">
+                      {translation.source_text}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandLeft(translation.id)}
+                      className="text-blue-600 text-sm hover:underline shrink-0"
+                    >
+                      Ver menos
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      ref={setLeftRef(translation.id)}
+                      className="text-lg truncate flex-1"
+                    >
+                      {translation.source_text}
+                    </p>
+                    {overflowLeft[translation.id] && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandLeft(translation.id)}
+                        className="text-blue-600 text-sm hover:underline shrink-0"
+                      >
+                        Ver más
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
 
-          <div className="w-1/2 px-8 flex items-center gap-6">
+          {/* Columna derecha: ocupa el espacio restante, sin solapar iconos */}
+          <div className="flex-1 px-8 flex items-center gap-6 min-w-0">
             <span className="text-sm text-gray-900 px-2 py-1 bg-red-200 border border-red-300 rounded-sm">
               {translation.target_lang}
             </span>
-            <h3 className="text-lg truncate">{translation.translated_text}</h3>
+            <div className="flex-1 min-w-0">
+              {expandedRight[translation.id] ? (
+                <>
+                  <p className="text-lg whitespace-pre-wrap">
+                    {translation.translated_text}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleExpandRight(translation.id)}
+                    className="text-blue-600 text-sm hover:underline mt-1"
+                  >
+                    Ver menos
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 w-full min-w-0">
+                  <p
+                    ref={setRightRef(translation.id)}
+                    className="text-lg truncate flex-1"
+                  >
+                    {translation.translated_text}
+                  </p>
+                  {overflowRight[translation.id] && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandRight(translation.id)}
+                      className="text-blue-600 text-sm hover:underline shrink-0"
+                    >
+                      Ver más
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="absolute right-4 flex gap-2">
-            <button className="p-2" onClick={() => handleEdit(translation.id)}>
+          {/* Iconos de acción (tamaño constante y columna fija) */}
+          <div className="w-16 flex gap-2 items-center justify-end pr-4">
+            <button
+              className="p-2"
+              onClick={() => handleEdit(translation.id)}
+              title={editingId === translation.id ? "Guardar" : "Editar"}
+              aria-label={editingId === translation.id ? "Guardar" : "Editar"}
+            >
               {editingId === translation.id ? (
-                <span className="text-green-500 font-semibold">Save</span>
+                <SaveIcon className="h-5 w-5 text-green-500 hover:text-green-600 cursor-pointer" />
               ) : (
                 <EditIcon className="h-5 w-5 text-blue-400 hover:text-blue-500 cursor-pointer" />
               )}
