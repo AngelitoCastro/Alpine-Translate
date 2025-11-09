@@ -1,3 +1,4 @@
+// Icono SVG para eliminar una traducción del historial
 export const DeleteIcon = ({ className }) => {
   return (
     <svg
