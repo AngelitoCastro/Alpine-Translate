@@ -1,34 +1,37 @@
+// Componente raíz de la aplicación: gestiona el estado de traducción y rendering principal
 import { useEffect } from "react";
-import { useDebounce } from "./UseDebounce";
-import { Header } from "./components/Header";
-import { TranslateIcon } from "./components/icons/Translate";
-import { useTranslator } from "./stores/translate";
-import { TranslateHistory } from "./components/TranslateHistory";
+import { useDebounce } from "./UseDebounce"; // Hook para retardar las peticiones al backend
+import { Header } from "./components/Header"; // Selector / intercambio de idiomas
+import { TranslateIcon } from "./components/icons/Translate"; // Icono del título
+import { useTranslator } from "./stores/translate"; // Store global (Zustand)
+import { TranslateHistory } from "./components/TranslateHistory"; // Historial de traducciones
 
 export const App = () => {
   const {
-    translate,
-    languageInput,
-    translations,
-    languageOutput,
-    prompt,
+    translate, // Texto traducido mostrado
+    languageInput, // Idioma origen
+    translations, // Lista historial
+    languageOutput, // Idioma destino
+    prompt, // Texto que el usuario escribe
     setTranslate,
     setPrompt,
-    isLoading,
+    isLoading, // Flag de carga
     setIsLoading,
     setTranslations,
   } = useTranslator();
-  const finalPrompt = useDebounce(prompt, 900);
+  const finalPrompt = useDebounce(prompt, 900); // Valor del prompt tras 900ms sin cambios
 
   const handleInput = (e) => {
-    setPrompt(e.target.value);
+    setPrompt(e.target.value); // Actualiza texto y disparará debounce
   };
 
   useEffect(() => {
+    // Cuando el prompt estabilizado cambia y no está vacío, pedir traducción
     if (!finalPrompt.trim()) return;
     fetchTranslation();
   }, [finalPrompt]);
 
+  // Llama al backend para generar y guardar la traducción
   const fetchTranslation = async () => {
     setIsLoading(true);
     try {
@@ -43,15 +46,15 @@ export const App = () => {
       });
 
       if (!response.ok) {
+        // Manejo básico de error HTTP
         const errorJson = await response.json().catch(() => ({}));
         throw new Error(errorJson.message || "Error al traducir");
       }
 
-      const { data } = await response.json();
-      // data ahora es el registro completo con id y translated_text
+      const { data } = await response.json(); // Registro completo con id
       setTranslate(data?.translated_text || "Sin resultado.");
       if (data) {
-        setTranslations([...translations, data]);
+        setTranslations([...translations, data]); // Agrega al historial local
       }
     } catch (error) {
       console.error(error);
@@ -63,7 +66,7 @@ export const App = () => {
 
   return (
     <section className="flex flex-col w-full  max-w-7xl mx-auto   font-sans text-gray-800 md:px-20 px-6">
-      {/* HEADER */}
+      {/* HEADER: barra superior con icono y título */}
       <nav className="text-gray-700 flex items-center py-8 gap-6 text-2xl font-semibold">
         <TranslateIcon ClassName="w-12 h-12  " /> Alpine Translate
       </nav>
