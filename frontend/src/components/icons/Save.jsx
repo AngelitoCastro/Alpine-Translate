@@ -1,3 +1,4 @@
+// Icono SVG para acción de guardar cambios
 export const SaveIcon = ({ className }) => {
   return (
     <svg
