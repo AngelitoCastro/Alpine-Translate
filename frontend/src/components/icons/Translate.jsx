@@ -1,4 +1,5 @@
-export const TranslateIcon = ({ClassName}) => {
+// Icono SVG para representar "traducir"
+export const TranslateIcon = ({ ClassName }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
