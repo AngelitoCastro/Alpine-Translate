@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vite'; // Helper para config
+import react from '@vitejs/plugin-react'; // Soporte React Fast Refresh
+import tailwindcss from '@tailwindcss/vite'; // Plugin Tailwind
 
-// https://vite.dev/config/
+// Configuración Vite: plugins esenciales
 export default defineConfig({
-    plugins: [react(), tailwindcss(),],
-
-})
+    plugins: [react(), tailwindcss()],
+});
