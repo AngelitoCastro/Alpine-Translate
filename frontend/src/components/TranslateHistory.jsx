@@ -107,6 +107,24 @@ export const TranslateHistory = () => {
     setTranslations(newTranslations);
   };
 
+  // Elimina una traducción por id: hace DELETE al backend y actualiza el estado local
+  const handleDelete = async (id) => {
+    // Actualización optimista: quitamos primero del estado
+    const prev = [...translations];
+    setTranslations(translations.filter((t) => t.id !== id));
+
+    try {
+      const res = await fetch(`http://localhost:4000/translations/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error al eliminar");
+    } catch (err) {
+      console.error(err);
+      // Rollback en caso de error
+      setTranslations(prev);
+    }
+  };
+
   const toggleExpandLeft = (id) =>
     setExpandedLeft((prev) => ({ ...prev, [id]: !prev[id] })); // Expande/colapsa izquierda
   const toggleExpandRight = (id) =>
