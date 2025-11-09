@@ -90,7 +90,3 @@ Nota: El frontend actualmente llama a `http://localhost:4000/translate` directam
 - Parametrizar la URL del backend vía `VITE_API_URL`
 - Añadir tests (Vitest/Jest) para lógica de UI/estado
 - Añadir rate limiting al endpoint `/translate`
-
-## 📄 Licencia
-
-MIT
