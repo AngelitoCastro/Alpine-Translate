@@ -5,7 +5,7 @@ import { Header } from "./components/Header"; // Selector / intercambio de idiom
 import { TranslateIcon } from "./components/icons/Translate"; // Icono del título
 import { useTranslator } from "./stores/translate"; // Store global (Zustand)
 import { TranslateHistory } from "./components/TranslateHistory"; // Historial de traducciones
-
+import { API_BASE_URL } from "../constants"; // URL base del backend
 export const App = () => {
   const {
     translate, // Texto traducido mostrado
@@ -35,7 +35,7 @@ export const App = () => {
   const fetchTranslation = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/translate", {
+      const response = await fetch(`${API_BASE_URL}/translate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
