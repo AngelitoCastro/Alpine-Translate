@@ -1,9 +1,11 @@
 import { Router } from "express";
+import { TranslateController } from "../controllers/translate.controller.js";
 
-// Definición de rutas para el recurso "/translate" (incompleto)
-const translate = Router("/translate");
+const router = Router();
 
-// Ejemplo de endpoint GET (por implementar):
-// translate.get('/', (req, res) => { ... })
+router.post("/translate", TranslateController.create);
+router.get("/translations", TranslateController.list);
+router.delete("/translations/:id", TranslateController.remove);
+router.patch("/translations/:id", TranslateController.update);
 
-export default translate;
+export default router;
