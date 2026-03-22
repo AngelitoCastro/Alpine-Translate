@@ -14,7 +14,7 @@ export class TranslateController {
     }
 
     try {
-      const prompt = this._buildPrompt(source_text, source_lang, target_lang);
+      const prompt = TranslateController._buildPrompt(source_text, source_lang, target_lang);
       const { response } = await model.generateContent(prompt);
 
       if (!response) {
@@ -91,7 +91,7 @@ export class TranslateController {
     }
 
     try {
-      const prompt = this._buildPrompt(source_text, source_lang, target_lang);
+      const prompt = TranslateController._buildPrompt(source_text, source_lang, target_lang);
       const { response } = await model.generateContent(prompt);
 
       if (!response) {
